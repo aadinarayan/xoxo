@@ -34,12 +34,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Game Functions
-  function handleCellClick(cell) {
-    const index = cell.dataset.index;
+  function handleCellClick(index) {
     if (board[index] || !gameActive) return;
 
     board[index] = currentPlayer;
-    cell.classList.add(currentPlayer);
+    const cell = cells[index];
+    const button = cell.querySelector('button');
+    button.innerHTML = ''; // Clear existing content
+    const img = document.createElement('img');
+    img.src = currentPlayer === 'x' ? 'assets/heart.png' : 'assets/letter.png';
+    img.style.width = '60%'; // Match the original size
+    img.style.height = '60%';
+    img.style.filter = currentPlayer === 'x' ? 'drop-shadow(0 0 6px rgba(255, 0, 100, 0.8))' : 'drop-shadow(0 0 6px rgba(100, 200, 255, 0.8))';
+    img.style.position = 'absolute';
+    img.style.top = '50%';
+    img.style.left = '50%';
+    img.style.transform = 'translate(-50%, -50%)'; // Center the image
+    button.appendChild(img);
 
     if (checkWin()) {
       const winningCells = winningCombinations.find(combo => combo.every(index => board[index] === currentPlayer));
@@ -49,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameScreen.style.display = 'none';
         winScreen.style.display = 'block';
         setupWindowControls(winScreen);
-      }, 1000); // Delay to show winning animation
+      }, 1000);
       return;
     }
 
@@ -59,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameScreen.style.display = 'none';
         failScreen.style.display = 'block';
         setupWindowControls(failScreen);
-      }, 1000); // Delay to show draw state
+      }, 1000);
       return;
     }
 
@@ -74,7 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function resetGame() {
     board.fill(null);
-    cells.forEach(cell => {
+    cells.forEach((cell, index) => {
+      const button = cell.querySelector('button');
+      button.innerHTML = ''; // Clear existing content
+      const initialImg = document.createElement('img');
+      initialImg.src = `assets/${index + 1}.png`;
+      initialImg.style.width = '100%';
+      initialImg.style.height = '100%';
+      button.appendChild(initialImg);
       cell.className = 'cell'; // Reset all classes
     });
     currentPlayer = 'x';
@@ -87,19 +105,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial Setup
-  setupWindowControls(startScreen); // Initialize controls for start screen
+  setupWindowControls(startScreen);
 
   // Event Listeners
   startButton.addEventListener('click', () => {
     startScreen.style.display = 'none';
     gameScreen.style.display = 'block';
-    setupWindowControls(gameScreen); // Reinitialize for game screen
+    setupWindowControls(gameScreen);
   });
 
   claimRewardButton.addEventListener('click', resetGame);
   tryAgainButton.addEventListener('click', resetGame);
 
-  cells.forEach(cell => {
-    cell.addEventListener('click', () => handleCellClick(cell));
+  cells.forEach((cell, index) => {
+    const button = document.createElement('button');
+    button.style.width = '100%';
+    button.style.height = '100%';
+    button.style.background = 'transparent';
+    button.style.border = 'none';
+    button.style.cursor = 'pointer';
+    button.style.position = 'relative'; // Ensure relative positioning for absolute child
+    button.style.borderRadius = '15px'; // Rounded corners
+    button.style.overflow = 'hidden'; // Ensure image respects rounded corners
+    const initialImg = document.createElement('img');
+    initialImg.src = `assets/${index + 1}.png`;
+    initialImg.style.width = '100%';
+    initialImg.style.height = '100%';
+    initialImg.style.objectFit = 'cover'; // Ensure image fills the button shape
+    button.appendChild(initialImg);
+    button.addEventListener('click', () => handleCellClick(index));
+    cell.appendChild(button);
   });
+
+  // Remove hover effect causing alignment issues
+  cells.forEach(cell => {
+    cell.style.backgroundColor = 'transparent'; // Remove hover background
+    cell.style.transform = 'none'; // Remove scale transform
+  });
+
+  // Set fixed window size on load
+  window.electronAPI.setWindowSize(400, 400);
 });
